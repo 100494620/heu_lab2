@@ -56,6 +56,17 @@ def parse_data(data):
 
 #def restrictions(franjas, matrix_size, std_positions, spc_positions, prk_positions, planes):
 
+def unique_mantainance(*domain):
+    time_slots = []
+    for pos, franja in domain:
+        if franja in time_slots:
+            return False
+        time_slots.append(franja)
+    return True
+
+#def attendance_restriction(*domain):
+
+
 def main():
     problem = Problem()
     franjas, matrix_size, std_positions, spc_positions, prk_positions, planes = parse_data(read_data())
@@ -72,9 +83,13 @@ def main():
             domain.append((position, franja))
 
     problem.addVariables(variables, domain)
+    # unique time slot for each plane
+    problem.addConstraint(unique_mantainance, variables)
 
     #print(variables)
     #print(domain)
+    #solutions = problem.getSolutions()
+    #print(solutions)
 
 if __name__ == "__main__":
     main()
