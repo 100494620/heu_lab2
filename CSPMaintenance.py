@@ -2,6 +2,14 @@ from constraint import *
 import os
 import sys
 
+class Plane:
+    def __init__(self, id, tipo, restr, t1, t2):
+        self.id = id
+        self.tipo = tipo
+        self.restr = restr
+        self.t1 = t1
+        self.t2 = t2
+
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -42,54 +50,52 @@ def parse_data(data):
     for plane_info in data[5:]:
         info = plane_info.strip().split("-")
 
-        plane = {
-            "id": info[0],
-            "tipo": info[1],
-            "restr": info[2],
-            "t1": info[3],
-            "t2": info[4]
-        }
-
-        planes.append(plane)
+        planes.append(Plane(info[0], info[1], info[2], info[3], info[4]))
     #print(prk_positions)
     return franjas, matrix_size, std_positions, spc_positions, prk_positions, planes
 
 #def restrictions(franjas, matrix_size, std_positions, spc_positions, prk_positions, planes):
 
-def unique_mantainance(*domain):
-    time_slots = []
-    for pos, franja in domain:
-        if franja in time_slots:
-            return False
-        time_slots.append(franja)
-    return True
+def jmb_adjacent(*args):
+    positions = []
+    plane_types = []
 
-#def attendance_restriction(*domain):
+    """for plane in planes:
+        plane_types.append(plane.tipo)
 
+    for i in range(len(planes) - 1):
+        for j in range(i + 1, len(positions)):
+            if plane_types[i] == plane_types[j] == "JMB":
+                if abs(positions[i][0] - positions[j][0]) + abs(positions[i][1] - positions[j][1]) == 1:
+                    return False
+
+    return True"""
 
 def main():
     problem = Problem()
     franjas, matrix_size, std_positions, spc_positions, prk_positions, planes = parse_data(read_data())
 
     variables = []
-    domain = []
 
     positions = std_positions + spc_positions + prk_positions
-    for i in range(1, len(planes)+1):
-        variables.append(f'A{i}')
 
-    for position in positions:
+    for plane in planes:
         for franja in range(0, franjas):
-            domain.append((position, franja))
+            variables.append((plane, franja))
+    # assures that all planes will be assigned to the unique taller/parking in each time slot
+    for var in variables:
+        problem.addVariable(var, positions)
 
-    problem.addVariables(variables, domain)
-    # unique time slot for each plane
-    problem.addConstraint(unique_mantainance, variables)
+    # variable - (plane, time-slot)
+    # map <int time slot, planes>
+    for i in range(0, franjas):
+        problem.addConstraint(jmb_adjacent, (planes, i))
 
     #print(variables)
     #print(domain)
-    #solutions = problem.getSolutions()
-    #print(solutions)
+    solutions = problem.getSolutions()
+    print(solutions)
+    #print(len(solutions))
 
 if __name__ == "__main__":
     main()
