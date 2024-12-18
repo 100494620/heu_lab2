@@ -1,3 +1,5 @@
+import copy
+
 from constraint import *
 import os
 import sys
@@ -8,8 +10,8 @@ class Plane:
         self.id = id
         self.tipo = tipo
         self.restr = restr
-        self.t1 = t1
-        self.t2 = t2
+        self.t1 = int(t1)
+        self.t2 = int(t2)
 
     def __lt__(self, other):
         return self.id < other.id
@@ -63,7 +65,6 @@ def parse_data(data):
     #print(prk_positions)
     return franjas, matrix_size, std_positions, spc_positions, prk_positions, planes
 
-
 def franja_capacity(*args):
     # problem.addConstraint(jmb_adjacent, variables_to_time[i])
     # 0: (plane_0,0), (plane_1,0), (plane_2,0)
@@ -79,44 +80,89 @@ def taller_capacity(*args):
         return False
     return True
 
+def check_adjacent_jumbo(*args):
+    # take pos1 (x1, y1) and pos2 (x2, y2), if abs(x2-x1)!=1 and abs(y2-y1)!=1 then return true
+    for i in range(0, len(args)):
+        for j in range(i + 1, len(args)):
+
+            pos1 = args[i]
+            pos2 = args[j]
+
+            if (pos1[0] == pos2[0] and abs(pos1[1] - pos2[1]) == 1) or (
+                    pos1[1] == pos2[1] and abs(pos1[0] - pos2[0]) == 1):
+                return False
+
+    return True
+
+def empty_adjacency(matrix_size, *args):
+    positions = set(args)
+    for pos in positions:
+        if (pos[0] - 1, pos[1]) not in positions and pos[0] != 0:
+            continue
+        elif (pos[0], pos[1] - 1) not in positions and pos[1] != 0:
+            continue
+        elif (pos[0] + 1, pos[1]) not in positions and pos[0] != matrix_size[0] - 1:
+            continue
+        elif (pos[0], pos[1] + 1) not in positions and pos[1] != matrix_size[1] - 1:
+            continue
+        else:
+            return False
+    return True
+
 def main():
     problem = Problem()
     franjas, matrix_size, std_positions, spc_positions, prk_positions, planes = parse_data(read_data())
 
-    variables = [] # [(plane: Plane, time_slot: int)]
+    # variables = [] # [(plane: Plane, time_slot: int)]
     # problem.constraints: [((plane: Plane, time_slot: int), [pos, pos])]
 
     positions = std_positions + spc_positions + prk_positions
-
+    ## T and t2>0 => visit spc
+    ## T and t1>0 => visit spc+std
+    ## F and t1>0 => visit spc+std without order
+    ## F and t2>0 => visit spc
     # set values
-    for plane in planes:
-        for franja in range(0, franjas):
-            variables.append((plane, franja))
 
     variables_to_time = {}
     jumbo_to_time = {}
     #0: (plane_0,0), (plane_1,0), (plane_2,0)
     #1: (plane_0,1), (plane_1,1), (plane_2,1)
     # ....
-
-    for var in variables:
-        if var[1] not in variables_to_time:
-            variables_to_time[var[1]] = []
-        variables_to_time[var[1]].append(var)
-
-        if var[0].tipo == "JMB" and var[1] not in jumbo_to_time:
-            jumbo_to_time[var[1]] = []
-        jumbo_to_time[var[1]].append(var)
-
     # assures that all planes will be assigned to the unique taller/parking in each time slot
-    for var in variables:
-        problem.addVariable(var, positions)
 
-    # variable - (plane, time-slot)
-    # map <int time slot, planes>
+    # variables=[(plane[t2=3], 3), (plane[t2=2], 2), (plane[t2=1], 1)]
+
+    for plane in planes:
+        plane_copy = copy.copy(plane)
+        for franja in range(franjas):
+
+            if franja not in variables_to_time:
+                variables_to_time[franja] = []
+            variables_to_time[franja].append((plane_copy, franja))
+
+            if plane.tipo == "JMB":
+                if franja not in jumbo_to_time:
+                    jumbo_to_time[franja] = []
+                jumbo_to_time[franja].append((plane_copy, franja))
+
+            if plane.tipo == 'T' and plane_copy.t2 > 0:
+                plane_copy.t2 = plane_copy.t2 - 1
+                problem.addVariable((plane_copy, franja), spc_positions)
+            elif plane_copy.t1 > 0:
+                plane_copy.t1 = plane_copy.t1 - 1
+                problem.addVariable((plane_copy, franja), spc_positions + std_positions)
+            elif plane_copy.t2 > 0:
+                plane_copy.t2 = plane_copy.t2 - 1
+                problem.addVariable((plane_copy, franja), spc_positions)
+            else:
+                problem.addVariable((plane_copy, franja), positions)
+            plane_copy = copy.copy(plane_copy)
+
     for i in range(0, franjas):
         problem.addConstraint(franja_capacity, variables_to_time[i])
         problem.addConstraint(taller_capacity, jumbo_to_time[i])
+        problem.addConstraint(check_adjacent_jumbo, jumbo_to_time[i])
+        problem.addConstraint(lambda *args, matrix_s=matrix_size: empty_adjacency(matrix_s, *args), variables_to_time[i])
 
     #print(variables)
     #print(domain)
