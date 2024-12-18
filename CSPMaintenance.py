@@ -104,7 +104,7 @@ def main():
             variables_to_time[var[1]] = []
         variables_to_time[var[1]].append(var)
 
-        if var[0].tipo == "JMB" not in variables_to_time:
+        if var[0].tipo == "JMB" and var[1] not in jumbo_to_time:
             jumbo_to_time[var[1]] = []
         jumbo_to_time[var[1]].append(var)
 
@@ -121,7 +121,7 @@ def main():
     #print(variables)
     #print(domain)
     solutions = problem.getSolutions()
-    print(solutions)
+    #print(solutions)
     print(len(solutions))
 
 if __name__ == "__main__":
