@@ -1,5 +1,5 @@
 import copy
-
+import csv
 from constraint import *
 import os
 import sys
@@ -167,8 +167,40 @@ def main():
     #print(variables)
     #print(domain)
     solutions = problem.getSolutions()
-    #print(solutions)
-    print(len(solutions))
+    print()
+    original_path = sys.argv[1]
+    directory_path = os.path.dirname(original_path)
+    csv_file_path = directory_path + '/output.csv'
 
+
+    with open(csv_file_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["N. Sol", len(solutions)])
+        writer.writerow([ "ID", "TIPO", "RESTR", "T1", "T2"])
+
+        if solutions:
+            i = 1
+            for solution in solutions:
+                writer.writerow(["Solution number: ", i])
+                for plane in planes:
+
+                    partial_solution = []
+                    pos_type = None
+                    for franja in range(franjas):
+                        position = solution[(plane, franja)]
+                        if position in std_positions:
+                            pos_type = "STD"
+                        elif position in spc_positions:
+                            pos_type = "SPC"
+                        elif position in prk_positions:
+                            pos_type = "PRK"
+                        partial_solution.append(f"{pos_type}{position}")
+
+                    full_solution = ", ".join(partial_solution)
+                    entry = [plane.id, plane.tipo, plane.restr, plane.t1, plane.t2, full_solution]
+                    writer.writerow(entry)
+                i+=1
+
+    #print("N. Sol:", len(solutions))
 if __name__ == "__main__":
     main()
