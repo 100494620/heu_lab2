@@ -125,6 +125,24 @@ def main():
     problem = Problem()
     franjas, matrix_size, std_positions, spc_positions, prk_positions, planes = parse_data(read_data())
 
+    # specifying path for the output file
+    original_path = sys.argv[1]
+    # getting the directory
+    directory_path = os.path.dirname(original_path)
+    # getting the .txt file name
+    file_name = os.path.basename(original_path)
+    # changing format to the .csv
+    csv_file_name = os.path.splitext(file_name)[0] + '.csv'
+    # putting back into the initial directory
+    csv_file_path = os.path.join(directory_path, csv_file_name)
+
+    if len(planes) > matrix_size[0] and len(planes) > matrix_size[1]:
+        solutions = 0
+        # writing intp the output.csv file solutions and amount of them
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["N. Sol", solutions])
+        return
     # variables = [] # [(plane: Plane, time_slot: int)]
     # problem.constraints: [((plane: Plane, time_slot: int), [pos, pos])]
 
@@ -156,7 +174,7 @@ def main():
                     jumbo_to_time[franja] = []
                 jumbo_to_time[franja].append((plane_copy, franja))
 
-            if plane.tipo == 'T' and plane_copy.t2 > 0:
+            if plane.restr == 'T' and plane_copy.t2 > 0:
                 plane_copy.t2 = plane_copy.t2 - 1
                 problem.addVariable((plane_copy, franja), spc_positions)
             elif plane_copy.t1 > 0:
@@ -179,20 +197,18 @@ def main():
     # getting solutions
     solutions = problem.getSolutions()
     print()
-    # specifying path for the output file
-    original_path = sys.argv[1]
-    # getting the directory
-    directory_path = os.path.dirname(original_path)
-    # getting the .txt file name
-    file_name = os.path.basename(original_path)
-    # changing format to the .csv
-    csv_file_name = os.path.splitext(file_name)[0] + '.csv'
-    # putting back into the initial directory
-    csv_file_path = os.path.join(directory_path, csv_file_name)
 
     # writing intp the output.csv file solutions and amount of them
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
+        if len(planes) > matrix_size[0] and len(planes) > matrix_size[1]:
+            solutions = 0
+        if len(solutions) == 0 or solutions == 0:
+            with open(csv_file_path, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(["N. Sol", 0])
+            return
+
         writer.writerow(["N. Sol", len(solutions)])
         writer.writerow([ "ID", "TIPO", "RESTR", "T1", "T2"])
 
@@ -201,7 +217,6 @@ def main():
             for solution in solutions:
                 writer.writerow(["Solution number: ", i])
                 for plane in planes:
-
                     partial_solution = []
                     pos_type = None
                     # add the std, spc or prk specification to the position in the final answer
