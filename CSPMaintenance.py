@@ -143,6 +143,7 @@ def main():
     # assures that all planes will be assigned to the unique taller/parking in each time slot
 
     for plane in planes:
+        # covers the domain restrictions 3 and 4
         plane_copy = copy.copy(plane)
         for franja in range(franjas):
 
@@ -169,6 +170,7 @@ def main():
             plane_copy = copy.copy(plane_copy)
 
     for i in range(0, franjas):
+        # all of constraints
         problem.addConstraint(franja_capacity, variables_to_time[i])
         problem.addConstraint(taller_capacity, jumbo_to_time[i])
         problem.addConstraint(check_adjacent_jumbo, jumbo_to_time[i])
