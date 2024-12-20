@@ -125,24 +125,6 @@ def main():
     problem = Problem()
     franjas, matrix_size, std_positions, spc_positions, prk_positions, planes = parse_data(read_data())
 
-    # specifying path for the output file
-    original_path = sys.argv[1]
-    # getting the directory
-    directory_path = os.path.dirname(original_path)
-    # getting the .txt file name
-    file_name = os.path.basename(original_path)
-    # changing format to the .csv
-    csv_file_name = os.path.splitext(file_name)[0] + '.csv'
-    # putting back into the initial directory
-    csv_file_path = os.path.join(directory_path, csv_file_name)
-
-    if len(planes) > matrix_size[0] and len(planes) > matrix_size[1]:
-        solutions = 0
-        # writing intp the output.csv file solutions and amount of them
-        with open(csv_file_path, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["N. Sol", solutions])
-        return
     # variables = [] # [(plane: Plane, time_slot: int)]
     # problem.constraints: [((plane: Plane, time_slot: int), [pos, pos])]
 
@@ -198,11 +180,20 @@ def main():
     solutions = problem.getSolutions()
     print()
 
+    # specifying path for the output file
+    original_path = sys.argv[1]
+    # getting the directory
+    directory_path = os.path.dirname(original_path)
+    # getting the .txt file name
+    file_name = os.path.basename(original_path)
+    # changing format to the .csv
+    csv_file_name = os.path.splitext(file_name)[0] + '.csv'
+    # putting back into the initial directory
+    csv_file_path = os.path.join(directory_path, csv_file_name)
+
     # writing intp the output.csv file solutions and amount of them
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        if len(planes) > matrix_size[0] and len(planes) > matrix_size[1]:
-            solutions = 0
         if len(solutions) == 0 or solutions == 0:
             with open(csv_file_path, mode='w', newline='') as file:
                 writer = csv.writer(file)
